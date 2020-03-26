@@ -24,9 +24,33 @@ Feature: Total Hours and Cost Validation in PT
     Given DB and Excel file connection
     When Compare the Total Hours in DB and PT
     Then Update the Result in Excel
-    
-     @tag2
-  Scenario: US and SME Total Cost validation
+   
+   @tag2
+   Scenario: US and SME Total Cost validation
     Given DB and Excel file connection For Total Cost
     When Compare the Total Cost in DB and PT
     Then Update the Total Cost Status in Excel
+    
+   @tag3
+   Scenario: Project Margin validation
+    Given DB and Excel file connection For Project Margins
+    When Compare the Margins present in DB and PT
+    Then Update the existing Project Margins in Excel
+    
+   @tag4
+   Scenario: Project Fees validation
+    Given DB and Excel file connection For Project Fees
+    When Compare the Project Fees present in DB and PT
+    Then Update the Project Fees details in Excel
+    
+   @tag5
+   Scenario: Project Background validation
+    Given DB and Excel file connection For Project Background
+    When Compare the Project Background present in DB and PT
+    Then Update the Project Background details in Excel
+    
+    
+    
+    
+    
+    
