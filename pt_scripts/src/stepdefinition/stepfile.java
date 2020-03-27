@@ -29,11 +29,11 @@ public class stepfile
 	public static WebDriver driver;
 	public static XSSFWorkbook wb, wb1;
 	public static FileInputStream fis1, fis2;
-	public static Sheet sheet, sheet1, sheet2, sheet3, sheet4;
+	public static Sheet sheet, sheet1, sheet2, sheet3, sheet4, sheet5, sheet6;
 	public static FileOutputStream fileOut, fileOut1;
-	public String sql, sql1, sql2, sql3, sql4;
+	public String sql, sql1, sql2, sql3, sql4, sql5, sql6;
 	public static double sum;
-	public Connection conn, conn1, conn2, conn3, conn4;
+	public Connection conn, conn1, conn2, conn3, conn4, conn5, conn6;
 	public String  data3, data4, data2, smefilter, usfilter, pno, pname;
 	   
 	 public Double data, data1, smedouble, usdouble, total, totalhr, rounded, smevalue, usvalue;
@@ -47,9 +47,7 @@ public class stepfile
 		wb = new XSSFWorkbook(fis1);
 		sheet = wb.getSheet("Hours");
 		conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
-		
-		
-		
+
 		sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 				"from (select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID, Todaydate as USDate\r\n" + 
 				"from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID,Todaydate)ut\r\n" + 
@@ -73,8 +71,7 @@ public class stepfile
 		  List<String> al3 = new ArrayList<String>();
 		  List<String> al4 = new ArrayList<String>();
 		  List<String> al5 = new ArrayList<String>();
-		  
-		  
+
 		  System.out.println("-----Total Hours-----");
 		  
 		  while(resultSet.next()) 
@@ -174,8 +171,7 @@ public class stepfile
 	           }
 	      
 	        }
-
-		   
+   
 	}
 
 	@Then("^Update the Result in Excel$")
@@ -390,8 +386,6 @@ public class stepfile
 			        	  
 			          }
 			         
-
-			         //System.out.println("Inside");
 		    	       Cell dataNameCell = dataRow2.createCell(1);
 				       dataNameCell.setCellValue(data);
 				       Cell Cell1 = dataRow2.createCell(2);
@@ -430,7 +424,7 @@ public class stepfile
    @Given("^DB and Excel file connection For Project Fees$")
    public void DB_and_Excel_file_connection_For_Project_Fees() throws Throwable 
    {
-	   sheet3 = wb.getSheet("Fees");
+	    sheet3 = wb.getSheet("Fees");
 		conn3 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
 		
 		sql3 = "Select Top 10 * FROM project  WHERE create_date between  DATEADD(m, -6,GETDATE()) and GETDATE() and design_fee is not NULL and Status IS NOT NULL AND project_number like 'S%'";
@@ -544,7 +538,6 @@ public class stepfile
 	
 		  }
 		  
-
 		   String data, data1, data2, data3, map, web, map1, web1;
 		   
 	          for (int i = 0; i < al2.size(); i++) 
@@ -625,12 +618,185 @@ public class stepfile
    @Then("^Update the Project Background details in Excel$")
    public void Update_the_Project_Background_details_in_Excel() throws Throwable 
    {
+	   /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   fileOut = new FileOutputStream(outputDirPath);
+	   wb.write(fileOut);
+	   fileOut.close();*/
+   }
+   
+   @Given("^DB and Excel file connection For Project Schedules$")
+   public void DB_and_Excel_file_connection_For_Project_Schedules() throws Throwable 
+   {
+	    sheet5 = wb.getSheet("Schedule");
+	    conn5 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+		
+	    sql5 = "	select Top 10 D.*,P.project_id as Project_Id, P.create_date from project P Left Join tbl_deadlinecalendar D on P.project_number=D.projectcode where P.create_date > '2013-12-31' and D.projectcode is not null";
+   }
+
+   @When("^Compare the Project Schedules prsent in DB and PT$")
+   public void Compare_the_Project_Schedules_prsent_in_DB_and_PT() throws Throwable 
+   {
+	   PreparedStatement ps5 =  conn5.prepareStatement(sql5);
+	   ResultSet resultSet5 = ps5.executeQuery();
+
+		  int row = 2;
+		  List<String> al = new ArrayList<String>();  
+		  List<String> al2 = new ArrayList<String>();
+		  List<String> al3 = new ArrayList<String>();
+		  List<String> al4 = new ArrayList<String>();
+		  List<String> al5 = new ArrayList<String>();
+		  
+		  System.out.println("-----Project Schedule-----"); 
+		  while(resultSet5.next()) 
+		  {
+			System.out.println(resultSet5.getString("projectcode")+"   "+resultSet5.getString("title"));
+		    
+		    al.add(resultSet5.getString("Project_Id"));
+		    al2.add(resultSet5.getString("StartDate"));
+		    al3.add(resultSet5.getString("EndDate"));
+		    al4.add(resultSet5.getString("projectcode"));
+		    al5.add(resultSet5.getString("title"));
+	
+		  }
+
+		   String data, data1, data2, data3, data4;
+		   
+	          for (int i = 0; i < al2.size(); i++) 
+	          {
+	    	     Row dataRow5 = sheet5.createRow(row);
+	    	     data = al.get(i);
+	    	     data1 =al2.get(i);
+	    	     data2 =al3.get(i);
+	    	     data3 =al4.get(i);
+	    	     data4 =al5.get(i);
+    
+	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
+	    
+	 	         String title = driver.findElement(By.xpath("//input[contains(@value,'"+data4+"')]")).getText();
+	 	         Cell Cell4 = dataRow5.createCell(6);
+				 Cell4.setCellValue("PT: "+title);
+
+	    	     Cell dataNameCell = dataRow5.createCell(1);
+			     dataNameCell.setCellValue(data);
+			     Cell dataAddressCell = dataRow5.createCell(2);
+			     dataAddressCell.setCellValue(data1);
+			     Cell Cell1 = dataRow5.createCell(3);
+			     Cell1.setCellValue(data2);
+			     Cell Cell2 = dataRow5.createCell(4);
+			     Cell2.setCellValue(data3);
+			     Cell Cell3 = dataRow5.createCell(5);
+				 Cell3.setCellValue("DB: "+data4);
+			     
+			     
+			     if(title.equals(data4))
+			     {
+			    	 
+			    	 Cell Cell5 = dataRow5.createCell(7);
+				     Cell5.setCellValue("Same Deadline");
+			     }
+			     else
+			     {
+			    	 Cell Cell5 = dataRow5.createCell(7);
+				     Cell5.setCellValue("FAIL");
+			     }
+
+	             row = row + 1;
+	              
+	          }
+   }
+
+   @Then("^Update the Project Schedules in Excel$")
+   public void Update_the_Project_Schedules_in_Excel() throws Throwable 
+   {
+	   /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   fileOut = new FileOutputStream(outputDirPath);
+	   wb.write(fileOut);
+	   fileOut.close();*/
+   }
+   
+   @Given("^DB and Excel file connection For Add Services$")
+   public void DB_and_Excel_file_connection_For_Add_Services() throws Throwable 
+   {
+	   sheet6 = wb.getSheet("AddService");
+	   conn6 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+		
+	   sql6 = "select Top 10 *,(select project_number from project where project_id= tp.parent_proj_id) as parent_proj_no, (select project_number from project where project_id=tp.child_proj_id) as child_Proj_no\r\n" + 
+				" from tbl_project_tree tp ORDER BY parent_proj_no";
+   }
+
+   @When("^Compare the Add Services present in DB and PT$")
+   public void Compare_the_Add_Services_present_in_DB_and_PT() throws Throwable 
+   {
+	   PreparedStatement ps6 =  conn6.prepareStatement(sql6);
+		ResultSet resultSet6 = ps6.executeQuery();    
+
+		  int row = 2;
+		  List<String> al = new ArrayList<String>();  
+		  List<String> al2 = new ArrayList<String>();
+		  List<String> al3 = new ArrayList<String>();
+		  List<String> al4 = new ArrayList<String>();
+		  
+		  System.out.println("-----Add Services-----");
+		  while(resultSet6.next()) 
+		  {
+			System.out.println(resultSet6.getString("parent_proj_no")+"   "+resultSet6.getString("child_Proj_no"));
+		    
+		    al.add(resultSet6.getString("parent_proj_id"));
+		    al2.add(resultSet6.getString("parent_proj_no"));
+		    al3.add(resultSet6.getString("child_proj_id"));
+		    al4.add(resultSet6.getString("child_Proj_no"));
+	
+		  }
+		  
+		   String data, data1, data2, data3;
+		   
+	          for (int i = 0; i < al2.size(); i++) 
+	          {
+	    	     Row dataRow6 = sheet6.createRow(row);
+	    	     data = al.get(i);
+	    	     data1 =al2.get(i);
+	    	     data2 =al3.get(i);
+	    	     data3 =al4.get(i);
+    
+	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
+
+	             //String addfile = driver.findElement(By.xpath("//a[contains(text(),'"+data3+"')]")).getText();
+	    	     String addfile = driver.findElement(By.xpath("//td[contains(text(),'"+data3+"')]")).getText();
+			    
+			     //System.out.println("Inside");
+	    	     Cell dataNameCell = dataRow6.createCell(1);
+			     dataNameCell.setCellValue(data);
+			     Cell dataAddressCell = dataRow6.createCell(2);
+			     dataAddressCell.setCellValue(data1);
+			     Cell Cell1 = dataRow6.createCell(3);
+			     Cell1.setCellValue(data2);
+			     Cell Cell2 = dataRow6.createCell(4);
+			     Cell2.setCellValue(data3);
+			     
+			     if(addfile.equals(data3))
+			     {
+			    	 driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data2+"");
+			    	 driver.findElement(By.xpath("//span[contains(text(),'Project Number : ')]")).click();
+			    	 Cell Cell3 = dataRow6.createCell(5);
+				     Cell3.setCellValue("Child Project Exists");
+			     }
+			     else
+			     {
+			    	 Cell Cell3 = dataRow6.createCell(5);
+				     Cell3.setCellValue("FAIL");
+			     }
+
+	             row = row + 1;
+	              
+	          }
+   }
+
+   @Then("^Update the Add Services details in Excel$")
+   public void Update_the_Add_Services_details_in_Excel() throws Throwable 
+   {
 	   String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();
    }
-   
-   
-   
 }

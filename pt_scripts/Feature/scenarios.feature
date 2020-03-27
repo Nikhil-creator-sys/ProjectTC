@@ -49,6 +49,18 @@ Feature: Total Hours and Cost Validation in PT
     When Compare the Project Background present in DB and PT
     Then Update the Project Background details in Excel
     
+   @tag6
+   Scenario: Project Schedule validation
+    Given DB and Excel file connection For Project Schedules
+    When Compare the Project Schedules prsent in DB and PT
+    Then Update the Project Schedules in Excel
+    
+   @tag7
+   Scenario: Add Services validation
+    Given DB and Excel file connection For Add Services
+    When Compare the Add Services present in DB and PT
+    Then Update the Add Services details in Excel
+    
     
     
     
