@@ -46,7 +46,7 @@ public class stepfile
 		fis1 = new FileInputStream("C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx");
 		wb = new XSSFWorkbook(fis1);
 		sheet = wb.getSheet("Hours");
-		conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+		conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 
 		sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 				"from (select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID, Todaydate as USDate\r\n" + 
@@ -190,7 +190,7 @@ public class stepfile
     {  
 	  
 		sheet1 = wb.getSheet("Cost");
-		conn1 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+		conn1 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
 		 sql1 = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USCost, st.SMECost, PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 		 		"from (select sum(cast(Hours as float)*110) as USCost, ProjectID as USProjectID, Todaydate as USDate from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID, Todaydate)ut \r\n" + 
@@ -320,11 +320,14 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Margins() throws Throwable 
    {
 	   sheet2 = wb.getSheet("Margin");
-	   conn2 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+	   conn2 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
-	   sql2 = "select Top 10 A.project_id,sum(A.key_value) as 'Key Values',P.project_number from tbl_projectAllocation A left join\r\n" + 
-				"project P on A.project_id=P.project_id where A.key_name IN\r\n" + 
-				"('task_10' , 'task_20' , 'task_30','task_40','task_50','task_8','task_80','task_9','task_90')group by A.project_id,P.project_number";
+	   sql2 = "select Top 10 A.project_id,sum(A.key_value) as 'Key Values',P.project_number\r\n" + 
+	   		"from tbl_projectAllocation A left join project P on A.project_id=P.project_id\r\n" + 
+	   		"where A.key_name IN  ('task_10' , 'task_20' , 'task_30','task_40','task_50',\r\n" + 
+	   		"'task_8','task_80','task_9','task_90') AND\r\n" + 
+	   		"convert(varchar,P.create_date,23) > '2013-12-31'\r\n" + 
+	   		"group by A.project_id,P.project_number";
    }
 
    @When("^Compare the Margins present in DB and PT$")
@@ -425,9 +428,9 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Fees() throws Throwable 
    {
 	    sheet3 = wb.getSheet("Fees");
-		conn3 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+		conn3 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
-		sql3 = "Select Top 10 * FROM project  WHERE create_date between  DATEADD(m, -6,GETDATE()) and GETDATE() and design_fee is not NULL and Status IS NOT NULL AND project_number like 'S%'";
+		sql3 = "Select Top 10 * FROM project  WHERE create_date> '2013-12-31'  and design_fee is not NULL and Status IS NOT NULL AND project_number like 'S%'";
    }
 
    @When("^Compare the Project Fees present in DB and PT$")
@@ -508,9 +511,11 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Background() throws Throwable 
    {
 	   sheet4 = wb.getSheet("Background");
-	   conn4 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+	   conn4 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
-	   sql4 = "select Top 10 P.project_number, G.* from tbl_googlemap G LEFT JOIN project P on G.Projectid = P.project_id where googlemapvalue like '<iframe src=%' or Websitevalue like 'http://www.%'";
+	   sql4 = "select Top 10 P.project_number, G.* from tbl_googlemap G LEFT JOIN \r\n" + 
+	   		"project P on G.Projectid = P.project_id where googlemapvalue like '<iframe src=%' or Websitevalue like 'http://www.%' and\r\n" + 
+	   		"convert(varchar,P.create_date,23) > '2013-12-31'";
    }
 
    @When("^Compare the Project Background present in DB and PT$")
@@ -628,7 +633,7 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Schedules() throws Throwable 
    {
 	    sheet5 = wb.getSheet("Schedule");
-	    conn5 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+	    conn5 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
 	    sql5 = "	select Top 10 D.*,P.project_id as Project_Id, P.create_date from project P Left Join tbl_deadlinecalendar D on P.project_number=D.projectcode where P.create_date > '2013-12-31' and D.projectcode is not null";
    }
@@ -718,7 +723,7 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Add_Services() throws Throwable 
    {
 	   sheet6 = wb.getSheet("AddService");
-	   conn6 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_feb2020","pt_migration","migration@pass");
+	   conn6 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
 	   sql6 = "select Top 10 *,(select project_number from project where project_id= tp.parent_proj_id) as parent_proj_no, (select project_number from project where project_id=tp.child_proj_id) as child_Proj_no\r\n" + 
 				" from tbl_project_tree tp ORDER BY parent_proj_no";
