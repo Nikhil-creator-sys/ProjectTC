@@ -2,6 +2,7 @@ package stepdefinition;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -43,10 +45,21 @@ public class stepfile
 	@Given("^DB and Excel file connection$")
 	public void DB_and_Excel_file_connection() throws Throwable 
 	{
+		 Properties prop = new Properties();
+	     InputStream input = new FileInputStream("./src/config/config.properties");
+	        prop.load(input);
+
+	        String url = prop.getProperty("QCdatabaseurl");
+	        String username = prop.getProperty("QCdbusername");
+	        String password = prop.getProperty("QCdbpassword");
+
+	        conn = DriverManager.getConnection(url, username, password);
+		
+		
 		fis1 = new FileInputStream("C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx");
 		wb = new XSSFWorkbook(fis1);
 		sheet = wb.getSheet("Hours");
-		conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
+		//conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 
 		sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 				"from (select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID, Todaydate as USDate\r\n" + 
@@ -725,8 +738,13 @@ public class stepfile
 	   sheet6 = wb.getSheet("AddService");
 	   conn6 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 		
-	   sql6 = "select Top 10 *,(select project_number from project where project_id= tp.parent_proj_id) as parent_proj_no, (select project_number from project where project_id=tp.child_proj_id) as child_Proj_no\r\n" + 
-				" from tbl_project_tree tp ORDER BY parent_proj_no";
+	   sql6 = "select Top 10  Temp.*,C.project_number as child_prj_number,c.project_id as child_prj_id from (\r\n" + 
+	   		"select T.*,PT.project_id,PT.project_number from tbl_project_tree T\r\n" + 
+	   		"LEFT JOIN project PT on\r\n" + 
+	   		"T.parent_proj_id=PT.project_id where T.parent_proj_id IN\r\n" + 
+	   		"(select P.project_id\r\n" + 
+	   		"from project P LEFT JOIN tbl_project_tree T ON P.project_id=T.parent_proj_id\r\n" + 
+	   		"where P.create_date>='2014-01-01'))Temp LEFT JOIN project C on Temp.child_proj_id=C.project_id";
    }
 
    @When("^Compare the Add Services present in DB and PT$")
@@ -744,12 +762,12 @@ public class stepfile
 		  System.out.println("-----Add Services-----");
 		  while(resultSet6.next()) 
 		  {
-			System.out.println(resultSet6.getString("parent_proj_no")+"   "+resultSet6.getString("child_Proj_no"));
+			System.out.println(resultSet6.getString("project_number")+"   "+resultSet6.getString("child_prj_number"));
 		    
 		    al.add(resultSet6.getString("parent_proj_id"));
-		    al2.add(resultSet6.getString("parent_proj_no"));
+		    al2.add(resultSet6.getString("project_number"));
 		    al3.add(resultSet6.getString("child_proj_id"));
-		    al4.add(resultSet6.getString("child_Proj_no"));
+		    al4.add(resultSet6.getString("child_prj_number"));
 	
 		  }
 		  
