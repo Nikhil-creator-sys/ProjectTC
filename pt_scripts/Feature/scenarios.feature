@@ -61,6 +61,18 @@ Feature: Total Hours and Cost Validation in PT
     When Compare the Add Services present in DB and PT
     Then Update the Add Services details in Excel
     
+    @tag8
+   Scenario: Proposal FileName validation
+    Given DB and Excel file connection For Proposal File
+    When Compare the Proposal FileName present in DB and PT
+    Then Update the Proposal details in Excel
+    
+    @tag9
+   Scenario: Client RFP FileName validation
+    Given DB and Excel file connection For Client RFP
+    When Compare the Client RFP FileName present in DB and PT
+    Then Update the Client RFP details in Excel
+    
     
     
     

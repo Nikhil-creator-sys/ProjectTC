@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -31,37 +30,33 @@ public class stepfile
 	public static WebDriver driver;
 	public static XSSFWorkbook wb, wb1;
 	public static FileInputStream fis1, fis2;
-	public static Sheet sheet, sheet1, sheet2, sheet3, sheet4, sheet5, sheet6;
+	public static Sheet sheet, sheet1, sheet2, sheet3, sheet4, sheet5, sheet6, sheet7, sheet8;
 	public static FileOutputStream fileOut, fileOut1;
-	public String sql, sql1, sql2, sql3, sql4, sql5, sql6;
+	public String sql, sql1, sql2, sql3, sql4, sql5, sql6, sql7, sql8;
 	public static double sum;
-	public Connection conn, conn1, conn2, conn3, conn4, conn5, conn6;
-	public String  data3, data4, data2, smefilter, usfilter, pno, pname;
-	   
-	 public Double data, data1, smedouble, usdouble, total, totalhr, rounded, smevalue, usvalue;
-	 public String  data13, data14, smefilter1, usfilter1, data12, pno1, pname1;
-	 public Double data10, data11, smedouble1, usdouble1, total1, totalhr1, rounded1;
+	public static Connection conn;
+	public static String url, username, password;
 	 
 	@Given("^DB and Excel file connection$")
 	public void DB_and_Excel_file_connection() throws Throwable 
 	{
 		 Properties prop = new Properties();
 	     InputStream input = new FileInputStream("./src/config/config.properties");
-	        prop.load(input);
+	     prop.load(input);
 
-	        String url = prop.getProperty("QCdatabaseurl");
-	        String username = prop.getProperty("QCdbusername");
-	        String password = prop.getProperty("QCdbpassword");
+	     url = prop.getProperty("QCdatabaseurl");
+	     username = prop.getProperty("QCdbusername");
+	     password = prop.getProperty("QCdbpassword");
 
-	        conn = DriverManager.getConnection(url, username, password);
+	     conn = DriverManager.getConnection(url, username, password);
 		
 		
-		fis1 = new FileInputStream("C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx");
-		wb = new XSSFWorkbook(fis1);
-		sheet = wb.getSheet("Hours");
-		//conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
+		 fis1 = new FileInputStream("./src/excel/scenarios.xlsx");
+		 wb = new XSSFWorkbook(fis1);
+		 sheet = wb.getSheet("Hours");
+		 //conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 
-		sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
+		 sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 				"from (select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID, Todaydate as USDate\r\n" + 
 				"from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID,Todaydate)ut\r\n" + 
 				"Join (select sum(cast(TotalHours as float)) as SMEHrs,\r\n" + 
@@ -100,11 +95,12 @@ public class stepfile
 
 		  }
 		  
-
 	       System.setProperty("webdriver.chrome.driver", "./Drivers/chromedriver.exe");
 		   driver = new ChromeDriver();
 		   driver.manage().window().maximize();
 		   
+		   Double data, data1, smedouble, usdouble, smevalue, usvalue, total, totalhr, rounded;
+		   String data2, pno, pname, smefilter, usfilter, data3, data4;  
 		   for (int i = 0; i < al.size(); i++) 
 	        {
 	  	     Row dataRow = sheet.createRow(row);
@@ -190,8 +186,8 @@ public class stepfile
 	@Then("^Update the Result in Excel$")
 	public void Update_the_Result_in_Excel() throws Throwable 
 	{
-		// Not Needed
-	    /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+		// Not Needed while executing multiple scripts
+	    /*String outputDirPath = "./src/excel/scenarios.xlsx";
 	    fileOut = new FileOutputStream(outputDirPath);
 	    wb.write(fileOut);
 	    fileOut.close();*/
@@ -201,11 +197,12 @@ public class stepfile
    @Given("^DB and Excel file connection For Total Cost$")
     public void DB_and_Excel_file_connection_For_Total_Cost() throws Throwable 
     {  
-	  
+	   Properties prop = new Properties();
+	   InputStream input = new FileInputStream("./src/config/config.properties");
+	   prop.load(input);
+	   
 		sheet1 = wb.getSheet("Cost");
-		conn1 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
-		 sql1 = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USCost, st.SMECost, PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
+		sql1 = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USCost, st.SMECost, PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
 		 		"from (select sum(cast(Hours as float)*110) as USCost, ProjectID as USProjectID, Todaydate as USDate from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID, Todaydate)ut \r\n" + 
 		 		"	Join (select sum(cast(TotalHours as float)*30) as SMECost, ProjectID as SMEProjectID, Todaydate as SMEDate from tbl_Timesheet where Todaydate > '2013-12-31' group by ProjectID,TodayDate) \r\n" + 
 		 		"		st on ut.USProjectID=st.SMEProjectID join (select project_id,project_number,project_name from project)as PR\r\n" + 
@@ -215,7 +212,7 @@ public class stepfile
    @When("^Compare the Total Cost in DB and PT$")
    public void Compare_the_Total_Cost_in_DB_and_PT() throws Throwable 
    {
-	    PreparedStatement ps1 =  conn1.prepareStatement(sql1);
+	    PreparedStatement ps1 =  conn.prepareStatement(sql1);
 		ResultSet resultSet1 = ps1.executeQuery(); 
 		
 		  int row = 2;
@@ -240,7 +237,9 @@ public class stepfile
 
 		  }
 		  
-
+		   Double data10, data11, smedouble1, usdouble1, total1, totalhr1, rounded1;
+		   String data12, pno1, pname1, data13, data14, smefilter1, usfilter1;
+ 
 		   for (int i = 0; i < al.size(); i++) 
 	          {
 	    	     Row dataRow1 = sheet1.createRow(row);
@@ -302,10 +301,10 @@ public class stepfile
 			     
 	             row = row + 1;
 
-	             rounded = (double) Math.round(total1 * 100) / 100;
-	             System.out.println(rounded);
+	             rounded1 = (double) Math.round(total1 * 100) / 100;
+	             System.out.println(rounded1);
 	             
-	             if(rounded.equals(totalhr1))
+	             if(rounded1.equals(totalhr1))
 	             {
 	            	 Cell Result1 = dataRow1.createCell(10);
 	            	 Result1.setCellValue("PASS"); 
@@ -322,7 +321,8 @@ public class stepfile
    @Then("^Update the Total Cost Status in Excel$")
    public void Update_the_Total_Cost_Status_in_Excel() throws Throwable 
    {
-	  /* String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   // Not Needed while executing multiple scripts
+	   /* String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();*/
@@ -333,8 +333,6 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Margins() throws Throwable 
    {
 	   sheet2 = wb.getSheet("Margin");
-	   conn2 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
 	   sql2 = "select Top 10 A.project_id,sum(A.key_value) as 'Key Values',P.project_number\r\n" + 
 	   		"from tbl_projectAllocation A left join project P on A.project_id=P.project_id\r\n" + 
 	   		"where A.key_name IN  ('task_10' , 'task_20' , 'task_30','task_40','task_50',\r\n" + 
@@ -346,7 +344,7 @@ public class stepfile
    @When("^Compare the Margins present in DB and PT$")
    public void Compare_the_Margins_present_in_DB_and_PT() throws Throwable 
    {
-        PreparedStatement ps2 =  conn2.prepareStatement(sql2);
+        PreparedStatement ps2 =  conn.prepareStatement(sql2);
 		ResultSet resultSet2 = ps2.executeQuery();    
 
 		int row = 2;
@@ -431,7 +429,8 @@ public class stepfile
    @Then("^Update the existing Project Margins in Excel$")
    public void Update_the_existing_Project_Margins_in_Excel() throws Throwable 
    {
-	   /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   // Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();*/
@@ -441,8 +440,6 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Fees() throws Throwable 
    {
 	    sheet3 = wb.getSheet("Fees");
-		conn3 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
 		sql3 = "Select Top 10 * FROM project  WHERE create_date> '2013-12-31'  and design_fee is not NULL and Status IS NOT NULL AND project_number like 'S%'";
    }
 
@@ -450,7 +447,7 @@ public class stepfile
    public void Compare_the_Project_Fees_present_in_DB_and_PT() throws Throwable 
    {
 	   
-	    PreparedStatement ps3 =  conn3.prepareStatement(sql3);
+	    PreparedStatement ps3 =  conn.prepareStatement(sql3);
 		ResultSet resultSet3 = ps3.executeQuery();   
 
 		  int row = 2;
@@ -514,7 +511,8 @@ public class stepfile
    @Then("^Update the Project Fees details in Excel$")
    public void Update_the_Project_Fees_details_in_Excel() throws Throwable 
    {
-	 /*  String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   // Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();*/
@@ -523,9 +521,7 @@ public class stepfile
    @Given("^DB and Excel file connection For Project Background$")
    public void DB_and_Excel_file_connection_For_Project_Background() throws Throwable 
    {
-	   sheet4 = wb.getSheet("Background");
-	   conn4 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
+	   sheet4 = wb.getSheet("Background");	
 	   sql4 = "select Top 10 P.project_number, G.* from tbl_googlemap G LEFT JOIN \r\n" + 
 	   		"project P on G.Projectid = P.project_id where googlemapvalue like '<iframe src=%' or Websitevalue like 'http://www.%' and\r\n" + 
 	   		"convert(varchar,P.create_date,23) > '2013-12-31'";
@@ -534,7 +530,7 @@ public class stepfile
    @When("^Compare the Project Background present in DB and PT$")
    public void Compare_the_Project_Background_present_in_DB_and_PT() throws Throwable 
    {
-	     PreparedStatement ps4 =  conn4.prepareStatement(sql4);
+	     PreparedStatement ps4 =  conn.prepareStatement(sql4);
 		 ResultSet resultSet4 = ps4.executeQuery();    
 
 		  int row = 2;
@@ -556,7 +552,7 @@ public class stepfile
 	
 		  }
 		  
-		   String data, data1, data2, data3, map, web, map1, web1;
+		   String data, data1, data2, data3, map, web;
 		   
 	          for (int i = 0; i < al2.size(); i++) 
 	          {
@@ -636,7 +632,8 @@ public class stepfile
    @Then("^Update the Project Background details in Excel$")
    public void Update_the_Project_Background_details_in_Excel() throws Throwable 
    {
-	   /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   // Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();*/
@@ -646,15 +643,13 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Project_Schedules() throws Throwable 
    {
 	    sheet5 = wb.getSheet("Schedule");
-	    conn5 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
 	    sql5 = "	select Top 10 D.*,P.project_id as Project_Id, P.create_date from project P Left Join tbl_deadlinecalendar D on P.project_number=D.projectcode where P.create_date > '2013-12-31' and D.projectcode is not null";
    }
 
    @When("^Compare the Project Schedules prsent in DB and PT$")
    public void Compare_the_Project_Schedules_prsent_in_DB_and_PT() throws Throwable 
    {
-	   PreparedStatement ps5 =  conn5.prepareStatement(sql5);
+	   PreparedStatement ps5 =  conn.prepareStatement(sql5);
 	   ResultSet resultSet5 = ps5.executeQuery();
 
 		  int row = 2;
@@ -726,7 +721,8 @@ public class stepfile
    @Then("^Update the Project Schedules in Excel$")
    public void Update_the_Project_Schedules_in_Excel() throws Throwable 
    {
-	   /*String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	   // Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();*/
@@ -736,8 +732,6 @@ public class stepfile
    public void DB_and_Excel_file_connection_For_Add_Services() throws Throwable 
    {
 	   sheet6 = wb.getSheet("AddService");
-	   conn6 = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
-		
 	   sql6 = "select Top 10  Temp.*,C.project_number as child_prj_number,c.project_id as child_prj_id from (\r\n" + 
 	   		"select T.*,PT.project_id,PT.project_number from tbl_project_tree T\r\n" + 
 	   		"LEFT JOIN project PT on\r\n" + 
@@ -750,7 +744,7 @@ public class stepfile
    @When("^Compare the Add Services present in DB and PT$")
    public void Compare_the_Add_Services_present_in_DB_and_PT() throws Throwable 
    {
-	   PreparedStatement ps6 =  conn6.prepareStatement(sql6);
+	   PreparedStatement ps6 =  conn.prepareStatement(sql6);
 		ResultSet resultSet6 = ps6.executeQuery();    
 
 		  int row = 2;
@@ -817,7 +811,137 @@ public class stepfile
    @Then("^Update the Add Services details in Excel$")
    public void Update_the_Add_Services_details_in_Excel() throws Throwable 
    {
-	   String outputDirPath = "C:\\Users\\devaiah.nb\\Desktop\\Latest\\Modified\\Combined.xlsx";
+	// Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
+	   fileOut = new FileOutputStream(outputDirPath);
+	   wb.write(fileOut);
+	   fileOut.close();*/
+   }
+   
+   @Given("^DB and Excel file connection For Proposal File$")
+   public void DB_and_Excel_file_connection_For_Proposal_File() throws Throwable 
+   {
+	   sheet7 = wb.getSheet("Proposal");
+	   sql7 = "select Top 10 * from tbl_Records where Todaydate> '2014-01-01'";
+   }
+
+   @When("^Compare the Proposal FileName present in DB and PT$")
+   public void Compare_the_Proposal_FileName_present_in_DB_and_PT() throws Throwable 
+   {
+	   PreparedStatement ps7 =  conn.prepareStatement(sql7);
+		ResultSet resultSet7 = ps7.executeQuery();    
+
+		int row = 2;
+		  List<String> al = new ArrayList<String>();  
+		  List<String> al2 = new ArrayList<String>();
+		  List<String> al3 = new ArrayList<String>();
+		  while(resultSet7.next()) 
+		  {
+			System.out.println(resultSet7.getString("ProjectNo")+"     "+resultSet7.getString("FileName"));
+		    
+		    al.add(resultSet7.getString("ProjectID"));
+		    al2.add(resultSet7.getString("ProjectNo"));
+		    al3.add(resultSet7.getString("FileName"));
+	
+		  }
+		  
+		   String data, data1, data2;
+		   
+	          for (int i = 0; i < al2.size(); i++) 
+	          {
+	    	     Row dataRow = sheet7.createRow(row);
+	    	     data = al.get(i);
+	    	     data1 =al2.get(i);
+	    	     data2 =al3.get(i);
+	    	     
+	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
+	    	     Thread.sleep(2000);
+	 	   
+	             String pdf = driver.findElement(By.xpath("//a[contains(@href,'/TrackerQC/web/pdf/RFP/"+data2+"')]")).getText();
+			    
+			     //System.out.println("Inside");
+	    	     Cell ProjId = dataRow.createCell(1);
+	    	     ProjId.setCellValue(data);
+			     Cell ProjName = dataRow.createCell(2);
+			     ProjName.setCellValue(data1);
+			     Cell ProjFile = dataRow.createCell(3);
+			     ProjFile.setCellValue(data2);
+			     Cell Cell1 = dataRow.createCell(4);
+			     Cell1.setCellValue(pdf);
+
+	             row = row + 1;
+	          }
+   }
+
+   @Then("^Update the Proposal details in Excel$")
+   public void Update_the_Proposal_details_in_Excel() throws Throwable 
+   {
+	// Not Needed while executing multiple scripts
+	   /*String outputDirPath = "./src/excel/scenarios.xlsx";
+	   fileOut = new FileOutputStream(outputDirPath);
+	   wb.write(fileOut);
+	   fileOut.close();*/
+   }
+   
+   @Given("^DB and Excel file connection For Client RFP$")
+   public void DB_and_Excel_file_connection_For_Client_RFP() throws Throwable 
+   {
+	   sheet8 = wb.getSheet("ClientRFP");
+	   sql8 = "select Top 10 * from tbl_ClientRecords where ProjectNo is not null and Todaydate> '2014-01-01'";
+   }
+
+   @When("^Compare the Client RFP FileName present in DB and PT$")
+   public void Compare_the_Client_RFP_FileName_present_in_DB_and_PT() throws Throwable
+   {
+	   PreparedStatement ps8 =  conn.prepareStatement(sql8);
+	   ResultSet resultSet8 = ps8.executeQuery(); 
+		
+		int row = 2;
+		  List<String> al = new ArrayList<String>();  
+		  List<String> al2 = new ArrayList<String>();
+		  List<String> al3 = new ArrayList<String>();
+		  while(resultSet8.next()) 
+		  {
+			System.out.println(resultSet8.getString("ProjectNo")+"     "+resultSet8.getString("FileName"));
+		    
+		    al.add(resultSet8.getString("ProjectID"));
+		    al2.add(resultSet8.getString("ProjectNo"));
+		    al3.add(resultSet8.getString("FileName"));
+	
+		  }
+		  
+            String data, data1, data2;
+		   
+	          for (int i = 0; i < al2.size(); i++) 
+	          {
+	    	     Row dataRow = sheet8.createRow(row);
+	    	     data = al.get(i);
+	    	     data1 =al2.get(i);
+	    	     data2 =al3.get(i);
+	    	     
+	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
+	    	     Thread.sleep(2000);
+	 	   
+	             String pdf = driver.findElement(By.xpath("//a[contains(@href,'/TrackerQC/web/pdf/clientrfp/"+data2+"')]")).getText();
+
+	    	     Cell projId = dataRow.createCell(1);
+	    	     projId.setCellValue(data);
+			     Cell ProjNo = dataRow.createCell(2);
+			     ProjNo.setCellValue(data1);
+			     Cell ProjFile = dataRow.createCell(3);
+			     ProjFile.setCellValue(data2);
+			     Cell Cell1 = dataRow.createCell(4);
+			     Cell1.setCellValue(pdf);
+
+	             row = row + 1;
+	        
+	          }
+   }
+
+   @Then("^Update the Client RFP details in Excel$")
+   public void Update_the_Client_RFP_details_in_Excel() throws Throwable 
+   {
+	   String outputDirPath = "./src/excel/scenarios.xlsx";
 	   fileOut = new FileOutputStream(outputDirPath);
 	   wb.write(fileOut);
 	   fileOut.close();
