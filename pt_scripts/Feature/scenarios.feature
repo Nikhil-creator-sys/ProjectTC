@@ -17,7 +17,7 @@
 ## (Comments)
 #Sample Feature Definition Template
 @tag
-Feature: Total Hours and Cost Validation in PT
+Feature: PT Test Scenarios Validation
 
   @tag1
   Scenario: US and SME Total Hours validation

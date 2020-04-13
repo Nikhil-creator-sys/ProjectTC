@@ -56,14 +56,16 @@ public class stepfile
 		 sheet = wb.getSheet("Hours");
 		 //conn = DriverManager.getConnection("jdbc:sqlserver://FFX-SQL\\SETTYDB;databaseName=ptpd_march2020","ptpd_marchUser","migration@pass");
 
-		 sql = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs,PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
-				"from (select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID, Todaydate as USDate\r\n" + 
-				"from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID,Todaydate)ut\r\n" + 
-				"Join (select sum(cast(TotalHours as float)) as SMEHrs,\r\n" + 
-				"ProjectID as SMEProjectID, Todaydate as SMEDate from tbl_Timesheet where Todaydate > '2013-12-31' group by ProjectID,Todaydate)\r\n" + 
-				"st on ut.USProjectID=st.SMEProjectID  \r\n" + 
-				"join (select project_id,project_number,project_name from project)as PR\r\n" + 
-				"on PR.project_id=st.SMEProjectID";
+		 sql = "select * from\r\n" + 
+		 		"    (\r\n" + 
+		 		"    select Top 20 project_number, project_name,  project_id as ProjectID from project where create_date > '2013-12-31'\r\n" + 
+		 		"    ) x inner join\r\n" + 
+		 		"    (\r\n" + 
+		 		"    select ut.USProjectID, st.SMEProjectID, ut.USHrs,st.SMEHrs from (\r\n" + 
+		 		"    select sum(cast(Hours as float)) as USHrs, ProjectID as USProjectID from tbl_ushours  group by ProjectID)ut\r\n" + 
+		 		"    Join (select sum(cast(TotalHours as float)) as SMEHrs, ProjectID as SMEProjectID from tbl_Timesheet  group by ProjectID) st on ut.USProjectID=st.SMEProjectID\r\n" + 
+		 		"    ) y\r\n" + 
+		 		"    on x.ProjectID=y.SMEProjectID";
 
 	}
 
@@ -89,7 +91,7 @@ public class stepfile
 		    
 		    al.add(resultSet.getDouble("SMEHrs"));
 		    al2.add(resultSet.getDouble("USHrs"));
-		    al3.add(resultSet.getString("SMEProjectID"));
+		    al3.add(resultSet.getString("ProjectID"));
 		    al4.add(resultSet.getString("project_number"));
 		    al5.add(resultSet.getString("project_name"));	    
 
@@ -165,7 +167,7 @@ public class stepfile
 			     
 	           row = row + 1;
 
-	           rounded = (double) Math.round(total * 100) / 100;
+	           rounded = (double) Math.round((total * 100) / 100);
 	           System.out.println(rounded);
 	           
 	           if(rounded.equals(totalhr))
@@ -202,11 +204,15 @@ public class stepfile
 	   prop.load(input);
 	   
 		sheet1 = wb.getSheet("Cost");
-		sql1 = "select Top 10 ut.USProjectID, st.SMEProjectID, ut.USCost, st.SMECost, PR.project_number,PR.project_name, ut.USDate, st.SMEDate\r\n" + 
-		 		"from (select sum(cast(Hours as float)*110) as USCost, ProjectID as USProjectID, Todaydate as USDate from tbl_ushours where Todaydate > '2013-12-31' group by ProjectID, Todaydate)ut \r\n" + 
-		 		"	Join (select sum(cast(TotalHours as float)*30) as SMECost, ProjectID as SMEProjectID, Todaydate as SMEDate from tbl_Timesheet where Todaydate > '2013-12-31' group by ProjectID,TodayDate) \r\n" + 
-		 		"		st on ut.USProjectID=st.SMEProjectID join (select project_id,project_number,project_name from project)as PR\r\n" + 
-		 		"		 		on PR.project_id=st.SMEProjectID";
+		sql1 = "select * from\r\n" + 
+				"    (\r\n" + 
+				"    select Top 20 project_number, project_name,  project_id as ProjectID from project where create_date > '2013-12-31'\r\n" + 
+				"    ) x inner join\r\n" + 
+				"    (\r\n" + 
+				"    select ut.USProjectID, st.SMEProjectID, ut.USCost, st.SMECost from (select sum(cast(Hours as float)*110) as USCost, ProjectID as USProjectID from tbl_ushours group by ProjectID)ut\r\n" + 
+				"		Join (select sum(cast(TotalHours as float)*30) as SMECost, ProjectID as SMEProjectID from tbl_Timesheet group by ProjectID) st on ut.USProjectID=st.SMEProjectID\r\n" + 
+				"    ) y\r\n" + 
+				"    on x.ProjectID=y.SMEProjectID";
     }
 
    @When("^Compare the Total Cost in DB and PT$")
@@ -231,7 +237,7 @@ public class stepfile
 		    
 		    al.add(resultSet1.getDouble("SMECost"));
 		    al2.add(resultSet1.getDouble("USCost"));
-		    al3.add(resultSet1.getString("SMEProjectID"));
+		    al3.add(resultSet1.getString("ProjectID"));
 		    al4.add(resultSet1.getString("project_number"));
 		    al5.add(resultSet1.getString("project_name"));
 
@@ -301,7 +307,7 @@ public class stepfile
 			     
 	             row = row + 1;
 
-	             rounded1 = (double) Math.round(total1 * 100) / 100;
+	             rounded1 = (double) Math.round((total1 * 100) / 100);
 	             System.out.println(rounded1);
 	             
 	             if(rounded1.equals(totalhr1))
@@ -685,7 +691,7 @@ public class stepfile
     
 	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
 	    
-	 	         String title = driver.findElement(By.xpath("//input[contains(@value,'"+data4+"')]")).getText();
+	 	         String title = driver.findElement(By.xpath("//input[contains(@value,'"+data4+"')]")).getAttribute("value");
 	 	         Cell Cell4 = dataRow5.createCell(6);
 				 Cell4.setCellValue("PT: "+title);
 
@@ -777,7 +783,6 @@ public class stepfile
     
 	    	     driver.get("http://ffx-web/TrackerQC/projecttracker.aspx?ProjectID="+data+"");
 
-	             //String addfile = driver.findElement(By.xpath("//a[contains(text(),'"+data3+"')]")).getText();
 	    	     String addfile = driver.findElement(By.xpath("//td[contains(text(),'"+data3+"')]")).getText();
 			    
 			     //System.out.println("Inside");
@@ -835,6 +840,8 @@ public class stepfile
 		  List<String> al = new ArrayList<String>();  
 		  List<String> al2 = new ArrayList<String>();
 		  List<String> al3 = new ArrayList<String>();
+		  
+		  System.out.println("-----Proposal-----");
 		  while(resultSet7.next()) 
 		  {
 			System.out.println(resultSet7.getString("ProjectNo")+"     "+resultSet7.getString("FileName"));
@@ -900,6 +907,8 @@ public class stepfile
 		  List<String> al = new ArrayList<String>();  
 		  List<String> al2 = new ArrayList<String>();
 		  List<String> al3 = new ArrayList<String>();
+		  
+		  System.out.println("-----Client RFP-----");
 		  while(resultSet8.next()) 
 		  {
 			System.out.println(resultSet8.getString("ProjectNo")+"     "+resultSet8.getString("FileName"));
